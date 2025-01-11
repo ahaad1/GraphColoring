@@ -19,6 +19,7 @@ private:
     std::vector<std::vector<int>> adjacencyMatrix;
     std::vector<int> vertexColors;
 
+
     std::vector<bool> getAvailableColors(int vertex) const;
 
 public:
@@ -26,6 +27,9 @@ public:
 
     void parallelGreedy(int start, int end, std::mutex &mtx);
     bool SolveParallelGreedy();
+
+    bool solveParallelWelshPowell_First();
+    bool solveParallelWelshPowell_Sec();
 
     void loadFromFile(const std::string& filename);
     void generateRandomGraph(int vertices, int density);

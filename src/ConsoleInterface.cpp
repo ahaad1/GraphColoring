@@ -1,4 +1,6 @@
 #include "../include/ConsoleInterface.hpp"
+
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -14,30 +16,40 @@ std::string ConsoleInterface::getTimestampedFilename(const std::string& baseName
 
 void ConsoleInterface::runAlgorithms() {
     std::vector<GraphSolver::AlgorithmResult> results;
+    std::ofstream outFile("results.txt");
+    if (!outFile.is_open()) throw std::runtime_error("file open err \n");
+
+
 
     PerformanceTimer timer;
     bool success = false;
 
     std::cout << "Running algorithms..." << std::endl;
+    outFile << "Running algorithms..." << std::endl;
 
     // Greedy Algorithm
     std::cout << "Running Greedy Algorithm..." << std::endl;
+    outFile << "Running Greedy Algorithm..." << std::endl;
     timer.start();
     success = solver.solveGreedy();
     timer.stop();
     results.push_back({"greedy algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
     if (success) {
         std::cout << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+
     }
 
     // Welsh-Powell Algorithm
     std::cout << "Running Welsh-Powell Algorithm..." << std::endl;
+    outFile << "Running Welsh-Powell Algorithm..." << std::endl;
     timer.start();
     success = solver.solveWelshPowell();
     timer.stop();
     results.push_back({"Welsh-Powell Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
     if (success) {
         std::cout << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
     }
 
     /*
@@ -63,7 +75,7 @@ void ConsoleInterface::runAlgorithms() {
     }
     */
 
-    // Parallel Greedy
+    /*// Parallel Greedy
     std::cout << "Running Parallel Greedy Algorithm..." << std::endl;
     timer.start();
     success = solver.SolveParallelGreedy();
@@ -71,6 +83,31 @@ void ConsoleInterface::runAlgorithms() {
     results.push_back({"Parallel Greedy Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
     if (success) {
         std::cout << "Parallel Greedy: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }*/
+
+    // First Parallel Welsh-Powell
+    std::cout << "Running Parallel Welsh-Powell First Algorithm..." << std::endl;
+    outFile << "Running Parallel Welsh-Powell First Algorithm..." << std::endl;
+    timer.start();
+    success = solver.solveParallelWelshPowell_First();
+    timer.stop();
+    results.push_back({"Parallel Welsh-Powell First Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
+
+
+    // Sec Parallel Welsh-Powell
+    std::cout << "Running Parallel Welsh-Powell Sec Algorithm..." << std::endl;
+    outFile << "Running Parallel Welsh-Powell Sec Algorithm..." << std::endl;
+    timer.start();
+    success = solver.solveParallelWelshPowell_Sec();
+    timer.stop();
+    results.push_back({"Parallel Welsh-Powell Sec Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Parallel Welsh-Powell Sec: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "Running Parallel Welsh-Powell Sec Algorithm..." << std::endl;
     }
 
     // Output results
@@ -79,7 +116,12 @@ void ConsoleInterface::runAlgorithms() {
                   << (success ? "Completed successfully" : "Failed")
                   << " in " << timeMs << " ms. "
                   << "Colors used: " << (success ? colorsUsed : -1) << "\n";
+        outFile << name << ": "
+                  << (success ? "Completed successfully" : "Failed")
+                  << " in " << timeMs << " ms. "
+                  << "Colors used: " << (success ? colorsUsed : -1) << "\n";
     }
+    outFile.close();
 }
 
 void ConsoleInterface::run() {
