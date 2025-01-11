@@ -9,6 +9,79 @@
 
 GraphSolver::GraphSolver() : numVertices(0), numColors(0) {}
 
+bool GraphSolver::isColoringValid() const {
+    for (int u = 0; u < numVertices; ++u) {
+        for (int v = 0; v < numVertices; ++v) {
+            if (adjacencyMatrix[u][v] && vertexColors[u] != -1 && vertexColors[v] != -1 && vertexColors[u] == vertexColors[v]) {
+                std::cerr << "Conflict detected: Vertex " << u << " and Vertex " << v << " have the same color " << vertexColors[u] << "\n";
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool GraphSolver::isGrapthValid() const {
+    for (int i = 0; i < numVertices; ++i) {
+        if (adjacencyMatrix[i][i] != 0) {
+            return false; //петля
+        }
+    }
+
+    for (int i = 0; i < numVertices; ++i) {
+        for (int j = 0; j < numVertices; ++j) {
+            if (adjacencyMatrix[i][j] > 1 || adjacencyMatrix[j][i] > 1) {
+                return false; // кратное ребро
+            }
+        }
+    }
+
+    return true;
+}
+
+
+// TEST PARALLEL FUNC
+void GraphSolver::parallelGreedy(const int start, const int end, std::mutex &mtx) {
+    for (int u = start; u < end; ++u) {
+        std::vector<bool> available = getAvailableColors(u);
+        int color = -1;
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                color = c;
+                break;
+            }
+        }
+        if (color == -1) {
+            std::lock_guard<std::mutex> lock(mtx);
+            throw std::runtime_error("failed to color vertex " + std::to_string(u));
+        }
+        vertexColors[u] = color;
+    }
+}
+
+bool GraphSolver::SolveParallelGreedy() {
+    vertexColors.assign(numVertices, -1);
+
+    const int numThreads = std::thread::hardware_concurrency();
+    std::vector<std::thread> threads;
+    std::mutex mtx;  //это мьютекс для синканья
+
+    int chunkSize = numVertices / numThreads; /*размер блока для каждого потока*/
+
+    for (int i = 0; i < numThreads; ++i) {
+        int start = i * chunkSize;
+        int end = (i == numThreads - 1 ) ? numVertices : start + chunkSize;
+        threads.emplace_back(&GraphSolver::parallelGreedy, this, start, end, std::ref(mtx));
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    return true;
+}
+
+
 std::vector<bool> GraphSolver::getAvailableColors(int vertex) const {
     std::vector<bool> available(numColors, true);
     for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
@@ -55,7 +128,7 @@ void GraphSolver::generateRandomGraph(int vertices, int density) {
     std::uniform_int_distribution<> dis(0, 99);
 
     for (int i = 0; i < numVertices; ++i) {
-        for (int j = 0; j < numVertices; ++j) {
+        for (int j = i + 1; j < numVertices; ++j) {
             if (dis(gen) < density) {
                 adjacencyMatrix[i][j] = 1;
                 adjacencyMatrix[j][i] = 1;
@@ -243,7 +316,7 @@ void GraphSolver::saveGeneratedGrapthToDot(const std::string &filename) const {
     }
 
     for (int i = 0; i < numVertices; ++i) {
-        for (int j = 0; j < numVertices; ++j) {
+        for (int j = i + 1; j < numVertices; ++j) {
             if (adjacencyMatrix[i][j]) {
                 file << "   " << i << " -- " << j << ";\n";
             }

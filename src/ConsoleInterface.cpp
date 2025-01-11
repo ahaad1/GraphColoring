@@ -20,12 +20,15 @@ void ConsoleInterface::runAlgorithms() {
 
     std::cout << "Running algorithms..." << std::endl;
 
-    /*// Greedy Algorithm
+    // Greedy Algorithm
     std::cout << "Running Greedy Algorithm..." << std::endl;
     timer.start();
     success = solver.solveGreedy();
     timer.stop();
-    results.push_back({"greedy algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});*/
+    results.push_back({"greedy algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
 
     // Welsh-Powell Algorithm
     std::cout << "Running Welsh-Powell Algorithm..." << std::endl;
@@ -33,13 +36,21 @@ void ConsoleInterface::runAlgorithms() {
     success = solver.solveWelshPowell();
     timer.stop();
     results.push_back({"Welsh-Powell Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
 
+    /*
     // DSATUR Algorithm
     std::cout << "Running DSATUR Algorithm..." << std::endl;
     timer.start();
     success = solver.solveDSATUR();
     timer.stop();
     results.push_back({"DSATUR Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
+
 
     // Custom Algorithm
     std::cout << "Running Custom Algorithm..." << std::endl;
@@ -47,6 +58,20 @@ void ConsoleInterface::runAlgorithms() {
     success = solver.solveCustomAlgorithm();
     timer.stop();
     results.push_back({"Custom Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
+    */
+
+    // Parallel Greedy
+    std::cout << "Running Parallel Greedy Algorithm..." << std::endl;
+    timer.start();
+    success = solver.SolveParallelGreedy();
+    timer.stop();
+    results.push_back({"Parallel Greedy Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Parallel Greedy: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
 
     // Output results
     for (const auto& [name, timeMs, success, colorsUsed] : results) {
@@ -78,8 +103,13 @@ void ConsoleInterface::run() {
 
             solver.generateRandomGraph(vertices, density);
             solver.setNumColors(numColors);
-
+            /*solver.saveGeneratedGrapthToDot("graph.dot");*/
+            if (!solver.isGrapthValid()) {
+                std::cerr << "err: generated graph is invalid" << std::endl;
+                continue;
+            }
             std::cout << "Generated graph saved to generated_graph.dot.\n";
+
 
             runAlgorithms();
             break;

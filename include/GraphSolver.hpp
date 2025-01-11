@@ -4,6 +4,14 @@
 #include <vector>
 #include <string>
 
+/*
+ * testing with threads
+ */
+#include <thread>
+#include <vector>
+#include <mutex>
+
+
 class GraphSolver {
 private:
     int numVertices;
@@ -15,12 +23,19 @@ private:
 
 public:
     GraphSolver();
+
+    void parallelGreedy(int start, int end, std::mutex &mtx);
+    bool SolveParallelGreedy();
+
     void loadFromFile(const std::string& filename);
     void generateRandomGraph(int vertices, int density);
     bool solveCustomAlgorithm();
     bool solveDSATUR();
     bool solveGreedy();
     bool solveWelshPowell();
+
+    [[nodiscard]] bool isColoringValid() const;
+    bool isGrapthValid() const;
 
     void setNumColors(int colors);
     [[nodiscard]] int getColorCount() const;
