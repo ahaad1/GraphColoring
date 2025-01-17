@@ -1,21 +1,52 @@
-cmake_minimum_required(VERSION 3.30)
-project(grapth_coloring_proj)
+cmake_minimum_required(VERSION 3.10)
+project(GraphColoring)
 
 set(CMAKE_CXX_STANDARD 26)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++26 -fopenmp")
+# Указываем пути к OpenMP на macOS (если установлен через Homebrew)
+if(APPLE)
+    set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+    set(OpenMP_C_LIB_NAMES "omp")
+    set(OpenMP_CXX_LIB_NAMES "omp")
+    set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/libomp/lib/libomp.dylib")
+endif()
 
-# Находим OpenMP
+# Включаем поддержку OpenMP
 find_package(OpenMP REQUIRED)
 
-# Добавляем OpenMP к проекту
-add_executable(grapth_coloring_proj src/main.cpp
-        include/ConsoleInterface.hpp
+# Добавляем исходные файлы
+set(SOURCES
+        src/main.cpp
         src/ConsoleInterface.cpp
-        include/GraphSolver.hpp
         src/GraphSolver.cpp
+        src/PerformanceTimer.cpp
+        include/ConsoleInterface.hpp
+        include/GraphSolver.hpp
         include/PerformanceTimer.hpp
-        src/PerformanceTimer.cpp)
+)
 
-## Подключаем OpenMP
-target_link_libraries(grapth_coloring_proj PRIVATE OpenMP::OpenMP_CXX)
+# Создаем исполняемый файл
+add_executable(GraphColoring ${SOURCES})
+
+# Подключаем OpenMP к целевому исполняемому файлу
+if(OpenMP_FOUND)
+    target_link_libraries(GraphColoring PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+# Для macOS добавляем пути к библиотеке OpenMP
+if(APPLE)
+    include_directories(/opt/homebrew/opt/libomp/include)
+    link_directories(/opt/homebrew/opt/libomp/lib)
+    target_link_libraries(GraphColoring PUBLIC omp)
+endif()
+
+# Для Windows добавляем библиотеку для работы с консолью
+if(WIN32)
+    target_link_libraries(GraphColoring PUBLIC kernel32.lib)
+endif()
+
+# Для Linux (если OpenMP установлен через пакетный менеджер)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(GraphColoring PUBLIC omp)
+endif()
