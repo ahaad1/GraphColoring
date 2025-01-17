@@ -57,7 +57,7 @@ bool GraphSolver::solveParallelWelshPowell_First() {
     for (int i = 0; i < numVertices; ++i) {
         vertexList.emplace_back(degrees[i], i);
     }
-    std::sort(vertexList.begin(), vertexList.end(), [](const auto& a, const auto& b) {
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
         return a.first > b.first;
     });
 
@@ -136,7 +136,7 @@ bool GraphSolver::solveParallelWelshPowell_Sec() {
     for (int i = 0; i < numVertices; ++i) {
         vertexList.emplace_back(degrees[i], i);
     }
-    std::sort(vertexList.begin(), vertexList.end(), [](const auto& a, const auto& b) {
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
         return a.first > b.first;
     });
 
@@ -199,7 +199,7 @@ bool GraphSolver::solveParallelWelshPowell_Sec() {
     return true;
 }
 
-std::vector<bool> GraphSolver::getAvailableColors(int vertex) const {
+std::vector<bool> GraphSolver::getAvailableColors(const int vertex) const {
     std::vector<bool> available(numColors, true);
     for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
         if (adjacencyMatrix[vertex][neighbor] && vertexColors[neighbor] != -1) {
@@ -210,7 +210,7 @@ std::vector<bool> GraphSolver::getAvailableColors(int vertex) const {
 }
 
 
-void GraphSolver::generateRandomGraph(int vertices, int density) {
+void GraphSolver::generateRandomGraph(const int vertices, const int density) {
     std::cout << "generating random graph with " << vertices << " vertices and " << density << " density" << std::endl;
     numVertices = vertices;
     adjacencyMatrix.assign(numVertices, std::vector<int>(numVertices, 0));
@@ -322,7 +322,7 @@ bool GraphSolver::solveWelshPowell() {
         /*vertexList.push_back(std::make_pair(degrees[i], i));*/
         vertexList.emplace_back(degrees[i], i);
     }
-    std::sort(vertexList.begin(), vertexList.end(), [](const std::pair<int, int>& a, const std::pair<int, int>&b){return a.first > b.first;});
+    std::ranges::sort(vertexList, [](const std::pair<int, int>& a, const std::pair<int, int>&b){return a.first > b.first;});
 
     for (const auto& vertexPair : vertexList) {
         const int vertex = vertexPair.second;

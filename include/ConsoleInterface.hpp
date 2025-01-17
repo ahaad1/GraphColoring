@@ -4,7 +4,6 @@
 #include "GraphSolver.hpp"
 #include "PerformanceTimer.hpp"
 
-
 class ConsoleInterface {
 private:
     GraphSolver solver;

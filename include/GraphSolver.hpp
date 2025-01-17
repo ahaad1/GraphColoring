@@ -4,13 +4,6 @@
 #include <vector>
 #include <string>
 
-/*
- * testing with threads
- */
-#include <thread>
-#include <mutex>
-
-
 class GraphSolver {
 private:
     int numVertices;
