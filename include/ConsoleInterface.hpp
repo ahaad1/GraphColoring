@@ -9,7 +9,7 @@ private:
     GraphSolver solver;
 
     void runAlgorithms();
-
+    void runBenchmarks();
 public:
     void run();
     static std::string getTimestampedFilename(const std::string& baseName);

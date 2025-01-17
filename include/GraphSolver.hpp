@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <tuple>
 
 class GraphSolver {
 private:
@@ -27,8 +28,11 @@ public:
     std::tuple<bool, int64_t> solveWelshPowell();
 
     /*algos which use multithreading*/
-    std::tuple<bool, int64_t> solveParallelWelshPowell_First();
-    std::tuple<bool, int64_t> solveParallelWelshPowell_Sec();
+    std::tuple<bool, int64_t> solveParallelWelshPowell();
+    std::tuple<bool, int64_t> solveParallelGreedy();
+    std::tuple<bool, int64_t> solveParallelDSATUR();
+    std::tuple<bool, int64_t> solveParallelCustomAlgorithm();
+
 
     [[nodiscard]] bool isColoringValid() const;
     [[nodiscard]] bool isGraphValid() const;
@@ -44,6 +48,7 @@ public:
         bool success;
         int colorsUsed;
         int64_t steps;
+        bool coloringValid;
     };
 };
 
