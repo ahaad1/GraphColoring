@@ -50,144 +50,77 @@ std::string ConsoleInterface::getTimestampedFilename(const std::string& baseName
 
 void ConsoleInterface::runAlgorithms() {
     std::vector<GraphSolver::AlgorithmResult> results;
-    std::ofstream outFile("results.txt");
+    std::ofstream outFile("results.csv");
     if (!outFile.is_open()) throw std::runtime_error("file open err \n");
+
+    outFile << "Algorithm,TimeMs,Success,ColorsUsed,Steps\n"; // Заголовок CSV файла
 
     PerformanceTimer timer;
     bool success = false;
-
-    std::cout << "\n";
-    setConsoleColor(COLOR_YELLOW);
-    std::cout << "================ Running Algorithms ================\n";
-    resetConsoleColor();
+    int64_t stepCount = 0;
 
     // Greedy Algorithm
     std::cout << "Running Greedy Algorithm...\n";
-    outFile << "Running Greedy Algorithm...\n";
     timer.start();
-    success = solver.solveGreedy();
+    std::tie(success, stepCount) = solver.solveGreedy();
     timer.stop();
-    results.push_back({"Greedy Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "Greedy Algorithm: Failed to color the graph.\n";
-        outFile << "Greedy Algorithm: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
+    results.push_back({"Greedy Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "Greedy Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
 
     // DSATUR Algorithm
     std::cout << "Running DSATUR Algorithm...\n";
-    outFile << "Running DSATUR Algorithm...\n";
     timer.start();
-    success = solver.solveDSATUR();
+    std::tie(success, stepCount) = solver.solveDSATUR();
     timer.stop();
-    results.push_back({"DSATUR Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "DSATUR Algorithm: Failed to color the graph.\n";
-        outFile << "DSATUR Algorithm: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
-
-    // Custom Algorithm
-    std::cout << "Running Custom Algorithm...\n";
-    outFile << "Running Custom Algorithm...\n";
-    timer.start();
-    success = solver.solveCustomAlgorithm();
-    timer.stop();
-    results.push_back({"Custom Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "Custom Algorithm: Failed to color the graph.\n";
-        outFile << "Custom Algorithm: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
+    results.push_back({"DSATUR Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "DSATUR Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
 
     // Welsh-Powell Algorithm
     std::cout << "Running Welsh-Powell Algorithm...\n";
-    outFile << "Running Welsh-Powell Algorithm...\n";
     timer.start();
-    success = solver.solveWelshPowell();
+    std::tie(success, stepCount) = solver.solveWelshPowell();
     timer.stop();
-    results.push_back({"Welsh-Powell Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "Welsh-Powell Algorithm: Failed to color the graph.\n";
-        outFile << "Welsh-Powell Algorithm: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
+    results.push_back({"Welsh-Powell Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "Welsh-Powell Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
 
-    // First Parallel Welsh-Powell
+    // Parallel Welsh-Powell First Algorithm
     std::cout << "Running Parallel Welsh-Powell First Algorithm...\n";
-    outFile << "Running Parallel Welsh-Powell First Algorithm...\n";
     timer.start();
-    success = solver.solveParallelWelshPowell_First();
+    std::tie(success, stepCount) = solver.solveParallelWelshPowell_First();
     timer.stop();
-    results.push_back({"Parallel Welsh-Powell First Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "Parallel Welsh-Powell First: Failed to color the graph.\n";
-        outFile << "Parallel Welsh-Powell First: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
+    results.push_back({"Parallel Welsh-Powell First Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "Parallel Welsh-Powell First Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
 
-    // Second Parallel Welsh-Powell
+    // Parallel Welsh-Powell Second Algorithm
     std::cout << "Running Parallel Welsh-Powell Second Algorithm...\n";
-    outFile << "Running Parallel Welsh-Powell Second Algorithm...\n";
     timer.start();
-    success = solver.solveParallelWelshPowell_Sec();
+    std::tie(success, stepCount) = solver.solveParallelWelshPowell_Sec();
     timer.stop();
-    results.push_back({"Parallel Welsh-Powell Second Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        setConsoleColor(COLOR_GREEN);
-        std::cout << "Parallel Welsh-Powell Second: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-        resetConsoleColor();
-        outFile << "Parallel Welsh-Powell Second: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    } else {
-        setConsoleColor(COLOR_RED);
-        std::cout << "Parallel Welsh-Powell Second: Failed to color the graph.\n";
-        outFile << "Parallel Welsh-Powell Second: Failed to color the graph.\n";
-        resetConsoleColor();
-    }
+    results.push_back({"Parallel Welsh-Powell Second Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "Parallel Welsh-Powell Second Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
+
+    // Custom Algorithm
+    std::cout << "Running Custom Algorithm...\n";
+    timer.start();
+    std::tie(success, stepCount) = solver.solveCustomAlgorithm();
+    timer.stop();
+    results.push_back({"Custom Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount(), stepCount});
+    outFile << "Custom Algorithm," << timer.getElapsedMilliseconds() << "," << success << "," << solver.getColorCount() << "," << stepCount << "\n";
 
     // Output results
     setConsoleColor(COLOR_YELLOW);
     std::cout << "\n================ Results ================\n";
     resetConsoleColor();
-    for (const auto& [name, timeMs, success, colorsUsed] : results) {
+    for (const auto& [name, timeMs, success, colorsUsed, steps] : results) {
         std::cout << name << ": "
                   << (success ? "Completed successfully" : "Failed")
                   << " in " << timeMs << " ms. "
-                  << "Colors used: " << (success ? colorsUsed : -1) << "\n";
-        outFile << name << ": "
+                  << "Colors used: " << (success ? colorsUsed : -1) << "\n"
+                  << "Steps: " << steps << "\n";
+        /*outFile << name << ": "
                 << (success ? "Completed successfully" : "Failed")
                 << " in " << timeMs << " ms. "
-                << "Colors used: " << (success ? colorsUsed : -1) << "\n";
+                << "Colors used: " << (success ? colorsUsed : -1) << "\n";*/
     }
     outFile.close();
 }

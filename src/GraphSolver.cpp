@@ -8,6 +8,8 @@
 #include <set>
 #include <algorithm>
 #include <omp.h>
+#include <tuple>
+#include <array>
 
 GraphSolver::GraphSolver() : numVertices(0), numColors(0) {}
 
@@ -41,164 +43,6 @@ bool GraphSolver::isGraphValid() const {
     return true;
 }
 
-bool GraphSolver::solveParallelWelshPowell_First() {
-    vertexColors.assign(numVertices, -1); // Инициализация цветов
-
-    // Вычисление степеней вершин (параллельно)
-    std::vector<int> degrees(numVertices, 0);
-    #pragma omp parallel for
-    for (int i = 0; i < numVertices; ++i) {
-        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
-    }
-
-    // Сортировка вершин по убыванию степени
-    std::vector<std::pair<int, int>> vertexList;
-    vertexList.reserve(numVertices);
-    for (int i = 0; i < numVertices; ++i) {
-        vertexList.emplace_back(degrees[i], i);
-    }
-    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
-        return a.first > b.first;
-    });
-
-    //  Раскраска вершин
-    std::vector<int> saturation(numVertices, 0); // Степень насыщенности
-
-    for (int step = 0; step < numVertices; ++step) {
-        // Находим вершину с максимальной степенью насыщенности
-        int maxSaturationVertex = -1;
-        int maxSaturation = -1;
-
-        #pragma omp parallel for
-        for (int v = 0; v < numVertices; ++v) {
-            if (vertexColors[v] == -1 && saturation[v] > maxSaturation) {
-                #pragma omp critical
-                {
-                    if (saturation[v] > maxSaturation) {
-                        maxSaturation = saturation[v];
-                        maxSaturationVertex = v;
-                    }
-                }
-            }
-        }
-
-        if (maxSaturationVertex == -1) {
-            // Если вершина не найдена, граф не может быть раскрашен
-            return false;
-        }
-
-        // Назначаем цвет вершине
-        std::vector<bool> available(numColors, true);
-        for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
-            if (adjacencyMatrix[maxSaturationVertex][neighbor] && vertexColors[neighbor] != -1) {
-                available[vertexColors[neighbor]] = false;
-            }
-        }
-
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[maxSaturationVertex] = c;
-                break;
-            }
-        }
-
-        if (vertexColors[maxSaturationVertex] == -1) {
-            // Если цвет не найден, граф не может быть раскрашен
-            return false;
-        }
-
-        // Обновляем степень насыщенности соседей
-        #pragma omp parallel for
-        for (int u = 0; u < numVertices; ++u) {
-            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
-                #pragma omp atomic
-                saturation[u]++;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool GraphSolver::solveParallelWelshPowell_Sec() {
-    vertexColors.assign(numVertices, -1); // Инициализация цветов
-
-    // Вычисление степеней вершин (параллельно)
-    std::vector<int> degrees(numVertices, 0);
-    #pragma omp parallel for
-    for (int i = 0; i < numVertices; ++i) {
-        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
-    }
-
-    // Сортировка вершин по убыванию степени
-    std::vector<std::pair<int, int>> vertexList;
-    vertexList.reserve(numVertices);
-    for (int i = 0; i < numVertices; ++i) {
-        vertexList.emplace_back(degrees[i], i);
-    }
-    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
-        return a.first > b.first;
-    });
-
-    // Раскраска вершин
-    std::vector<int> saturation(numVertices, 0); // Степень насыщенности
-
-    for (int step = 0; step < numVertices; ++step) {
-        // Находим вершину с максимальной степенью насыщенности
-        int maxSaturationVertex = -1;
-        int maxSaturation = -1;
-
-        #pragma omp parallel for
-        for (int v = 0; v < numVertices; ++v) {
-            if (vertexColors[v] == -1 && saturation[v] > maxSaturation) {
-                #pragma omp critical
-                {
-                    if (saturation[v] > maxSaturation) {
-                        maxSaturation = saturation[v];
-                        maxSaturationVertex = v;
-                    }
-                }
-            }
-        }
-
-        if (maxSaturationVertex == -1) {
-            // Если вершина не найдена, граф не может быть раскрашен
-            return false;
-        }
-
-        // Назначаем цвет вершине
-        std::vector<bool> available(numColors, true);
-        for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
-            if (adjacencyMatrix[maxSaturationVertex][neighbor] && vertexColors[neighbor] != -1) {
-                available[vertexColors[neighbor]] = false;
-            }
-        }
-
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[maxSaturationVertex] = c;
-                break;
-            }
-        }
-
-        if (vertexColors[maxSaturationVertex] == -1) {
-            // Если цвет не найден, граф не может быть раскрашен
-            return false;
-        }
-
-        // Обновляем степень насыщенности соседей
-        #pragma omp parallel for
-        for (int u = 0; u < numVertices; ++u) {
-            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
-                #pragma omp atomic
-                saturation[u]++;
-            }
-        }
-    }
-
-    return true;
-}
-
 std::vector<bool> GraphSolver::getAvailableColors(const int vertex) const {
     std::vector<bool> available(numColors, true);
     for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
@@ -209,139 +53,7 @@ std::vector<bool> GraphSolver::getAvailableColors(const int vertex) const {
     return available;
 }
 
-
-void GraphSolver::generateRandomGraph(const int vertices, const int density) {
-    std::cout << "generating random graph with " << vertices << " vertices and " << density << " density" << std::endl;
-    numVertices = vertices;
-    adjacencyMatrix.assign(numVertices, std::vector<int>(numVertices, 0));
-    vertexColors.assign(numColors, 0);
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 99);
-
-    for (int i = 0; i < numVertices; ++i) {
-        for (int j = i + 1; j < numVertices; ++j) {
-            if (dis(gen) < density) {
-                adjacencyMatrix[i][j] = 1;
-                adjacencyMatrix[j][i] = 1;
-            }
-        }
-    }
-}
-
-bool GraphSolver::solveCustomAlgorithm() {
-    vertexColors.assign(numVertices, -1);
-    for (int u = 0; u < numVertices; ++u) {
-        std::vector<bool> available = getAvailableColors(u);
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[u] = c;
-                break;
-            }
-        }
-        if (vertexColors[u] == -1) return false;
-    }
-    return true;
-}
-
-bool GraphSolver::solveDSATUR() {
-    vertexColors.assign(numVertices, -1);
-    std::vector<int> saturation(numVertices, 0);
-    std::vector<int> degree(numVertices, 0);
-
-    for (int i = 0; i < numVertices; ++i) {
-        for (int j = 0; j < numVertices; ++j) {
-            if (adjacencyMatrix[i][j]) {
-                ++degree[i];
-            }
-        }
-    }
-
-    for (int step = 0; step < numVertices; ++step) {
-        int maxSaturationVertex = -1;
-        int maxSaturation = -1;
-
-        for (int v = 0; v < numVertices; ++v) {
-            if (vertexColors[v] == -1 && (saturation[v] > maxSaturation || (saturation[v] == maxSaturation && degree[v] > degree[maxSaturationVertex]))) {
-                maxSaturation = saturation[v];
-                maxSaturationVertex = v;
-            }
-        }
-
-        std::vector<bool> available = getAvailableColors(maxSaturationVertex);
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[maxSaturationVertex] = c;
-                break;
-            }
-        }
-
-        if (vertexColors[maxSaturationVertex] == -1) return false;
-
-        for (int u = 0; u < numVertices; ++u) {
-            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
-                ++saturation[u];
-            }
-        }
-    }
-    return true;
-}
-
-bool GraphSolver::solveGreedy() {
-    vertexColors.assign(numVertices, -1);
-    for (int u = 0; u < numVertices; ++u) {
-        std::vector<bool> available = getAvailableColors(u);
-
-        int color = -1;
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                color = c;
-                break;
-            }
-        }
-
-        if (color == -1) return false;
-
-        vertexColors[u] = color;
-    }
-    return true;
-}
-
-bool GraphSolver::solveWelshPowell() {
-    vertexColors.assign(numVertices, -1);
-
-    std::vector<int> degrees(numVertices, 0);
-    for (int i = 0; i < numVertices; ++i) {
-        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
-    }
-
-    std::vector<std::pair<int, int>> vertexList;
-    vertexList.reserve(numVertices); //added here after commented
-    for (int i = 0; i < numVertices; ++i) {
-        /*vertexList.push_back(std::make_pair(degrees[i], i));*/
-        vertexList.emplace_back(degrees[i], i);
-    }
-    std::ranges::sort(vertexList, [](const std::pair<int, int>& a, const std::pair<int, int>&b){return a.first > b.first;});
-
-    for (const auto& vertexPair : vertexList) {
-        const int vertex = vertexPair.second;
-        std::vector<bool> available = getAvailableColors(vertex);
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[vertex] = c;
-                break;
-            }
-        }
-        if (vertexColors[vertex] == -1) {
-            return false;
-        }
-    }
-    return true;
-}
-
-
-void GraphSolver::setNumColors(int colors) {
+void GraphSolver::setNumColors(const int colors) {
     if (colors <= 0) {
         throw std::invalid_argument("number of colors must be greater than 0");
     }
@@ -396,7 +108,7 @@ void GraphSolver::saveColoredGraphToDot(const std::string &filename) const {
     file.close();
 }
 
-void GraphSolver::saveGeneratedGrapthToDot(const std::string &filename) const {
+void GraphSolver::saveGeneratedGraphToDot(const std::string &filename) const {
     std::ofstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("failed to open output file " + filename);
@@ -444,3 +156,313 @@ void GraphSolver::loadFromFile(const std::string &filename) {
 
     file.close();
 }
+
+void GraphSolver::generateRandomGraph(const int vertices, const int density) {
+    std::cout << "generating random graph with " << vertices << " vertices and " << density << " density" << std::endl;
+    numVertices = vertices;
+    adjacencyMatrix.assign(numVertices, std::vector<int>(numVertices, 0));
+    vertexColors.assign(numColors, 0);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 99);
+
+    for (int i = 0; i < numVertices; ++i) {
+        for (int j = i + 1; j < numVertices; ++j) {
+            if (dis(gen) < density) {
+                adjacencyMatrix[i][j] = 1;
+                adjacencyMatrix[j][i] = 1;
+            }
+        }
+    }
+}
+
+
+
+std::tuple<bool, int64_t> GraphSolver::solveCustomAlgorithm() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+    for (int u = 0; u < numVertices; ++u) {
+        std::vector<bool> available = getAvailableColors(u);
+        stepCount++;
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[u] = c;
+                break;
+            }
+            stepCount++;
+        }
+
+        if (vertexColors[u] == -1) return {false, -1};
+    }
+    return {true, stepCount};
+}
+
+std::tuple<bool, int64_t> GraphSolver::solveDSATUR() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+    std::vector<int> saturation(numVertices, 0);
+    std::vector<int> degree(numVertices, 0);
+
+    for (int i = 0; i < numVertices; ++i) {
+        for (int j = 0; j < numVertices; ++j) {
+            if (adjacencyMatrix[i][j]) {
+                ++degree[i];
+            }
+        }
+        stepCount++;
+    }
+
+    for (int step = 0; step < numVertices; ++step) {
+        int maxSaturationVertex = -1;
+        int maxSaturation = -1;
+
+        for (int v = 0; v < numVertices; ++v) {
+            if (vertexColors[v] == -1 && (saturation[v] > maxSaturation || (saturation[v] == maxSaturation && degree[v] > degree[maxSaturationVertex]))) {
+                maxSaturation = saturation[v];
+                maxSaturationVertex = v;
+            }
+            stepCount++;
+        }
+
+        std::vector<bool> available = getAvailableColors(maxSaturationVertex);
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[maxSaturationVertex] = c;
+                break;
+            }
+            stepCount++;
+        }
+
+        if (vertexColors[maxSaturationVertex] == -1) return {false, -1};
+
+        for (int u = 0; u < numVertices; ++u) {
+            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
+                ++saturation[u];
+            }
+            stepCount++;
+        }
+    }
+    return {true, stepCount};
+}
+
+std::tuple<bool, int64_t> GraphSolver::solveGreedy() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0; // Инициализация счетчика шагов
+    for (int u = 0; u < numVertices; ++u) {
+        std::vector<bool> available = getAvailableColors(u);
+        stepCount++;
+
+        int color = -1;
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                color = c;
+                break;
+            }
+            stepCount++;
+        }
+
+        if (color == -1) return {false, -1};
+
+        vertexColors[u] = color;
+        stepCount++;
+    }
+    return {true, stepCount};
+}
+
+std::tuple<bool, int64_t> GraphSolver::solveWelshPowell() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    std::vector<int> degrees(numVertices, 0);
+    for (int i = 0; i < numVertices; ++i) {
+        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
+        stepCount++;
+    }
+
+    std::vector<std::pair<int, int>> vertexList;
+    vertexList.reserve(numVertices);
+    for (int i = 0; i < numVertices; ++i) {
+        vertexList.emplace_back(degrees[i], i);
+        stepCount++;
+    }
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
+        return a.first > b.first;
+    });
+
+    for (const auto& vertexPair : vertexList) {
+        const int vertex = vertexPair.second;
+        std::vector<bool> available = getAvailableColors(vertex);
+        stepCount++;
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[vertex] = c;
+                break;
+            }
+            stepCount++;
+        }
+
+        if (vertexColors[vertex] == -1) {
+            return {false, -1};
+        }
+    }
+    return {true, stepCount};
+}
+
+std::tuple<bool, int64_t> GraphSolver::solveParallelWelshPowell_First() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    std::vector<int> degrees(numVertices, 0);
+    #pragma omp parallel for
+    for (int i = 0; i < numVertices; ++i) {
+        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
+        stepCount++;
+    }
+
+    std::vector<std::pair<int, int>> vertexList;
+    vertexList.reserve(numVertices);
+    for (int i = 0; i < numVertices; ++i) {
+        vertexList.emplace_back(degrees[i], i);
+        stepCount++;
+    }
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
+        return a.first > b.first;
+    });
+
+    std::vector<int> saturation(numVertices, 0);
+
+    for (int step = 0; step < numVertices; ++step) {
+        int maxSaturationVertex = -1;
+        int maxSaturation = -1;
+
+        #pragma omp parallel for
+        for (int v = 0; v < numVertices; ++v) {
+            if (vertexColors[v] == -1 && saturation[v] > maxSaturation) {
+                #pragma omp critical
+                {
+                    if (saturation[v] > maxSaturation) {
+                        maxSaturation = saturation[v];
+                        maxSaturationVertex = v;
+                    }
+                }
+            }
+            stepCount++;
+        }
+
+        if (maxSaturationVertex == -1) {
+            return {false, -1};
+        }
+
+        std::vector<bool> available(numColors, true);
+        for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
+            if (adjacencyMatrix[maxSaturationVertex][neighbor] && vertexColors[neighbor] != -1) {
+                available[vertexColors[neighbor]] = false;
+            }
+            stepCount++;
+        }
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[maxSaturationVertex] = c;
+                break;
+            }
+            stepCount++; // Увеличение счетчика шагов
+        }
+
+        if (vertexColors[maxSaturationVertex] == -1) {
+            return {false, -1};
+        }
+
+        #pragma omp parallel for
+        for (int u = 0; u < numVertices; ++u) {
+            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
+                #pragma omp atomic
+                saturation[u]++;
+            }
+            stepCount++; // Увеличение счетчика шагов
+        }
+    }
+    return {true, stepCount};
+}
+
+std::tuple<bool, int64_t> GraphSolver::solveParallelWelshPowell_Sec() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    std::vector<int> degrees(numVertices, 0);
+    #pragma omp parallel for
+    for (int i = 0; i < numVertices; ++i) {
+        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
+        stepCount++;
+    }
+
+    std::vector<std::pair<int, int>> vertexList;
+    vertexList.reserve(numVertices);
+    for (int i = 0; i < numVertices; ++i) {
+        vertexList.emplace_back(degrees[i], i);
+        stepCount++;
+    }
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
+        return a.first > b.first;
+    });
+
+    std::vector<int> saturation(numVertices, 0);
+
+    for (int step = 0; step < numVertices; ++step) {
+        int maxSaturationVertex = -1;
+        int maxSaturation = -1;
+
+        #pragma omp parallel for
+        for (int v = 0; v < numVertices; ++v) {
+            if (vertexColors[v] == -1 && saturation[v] > maxSaturation) {
+                #pragma omp critical
+                {
+                    if (saturation[v] > maxSaturation) {
+                        maxSaturation = saturation[v];
+                        maxSaturationVertex = v;
+                    }
+                }
+            }
+            stepCount++;
+        }
+
+        if (maxSaturationVertex == -1) {
+            return {false, -1};
+        }
+
+        std::vector<bool> available(numColors, true);
+        for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
+            if (adjacencyMatrix[maxSaturationVertex][neighbor] && vertexColors[neighbor] != -1) {
+                available[vertexColors[neighbor]] = false;
+            }
+            stepCount++;
+        }
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[maxSaturationVertex] = c;
+                break;
+            }
+            stepCount++;
+        }
+
+        if (vertexColors[maxSaturationVertex] == -1) {
+            return {false, -1};
+        }
+
+        #pragma omp parallel for
+        for (int u = 0; u < numVertices; ++u) {
+            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
+                #pragma omp atomic
+                saturation[u]++;
+            }
+            stepCount++;
+        }
+    }
+    return {true, stepCount};
+}
+
+

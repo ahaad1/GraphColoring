@@ -20,15 +20,15 @@ public:
     void loadFromFile(const std::string& filename);
     void generateRandomGraph(int vertices, int density);
 
-    /*algos with deafault reaslisation without using multithreading*/
-    bool solveCustomAlgorithm();
-    bool solveDSATUR();
-    bool solveGreedy();
-    bool solveWelshPowell();
+    /*algos with default realisation without using multithreading*/
+    std::tuple<bool, int64_t> solveCustomAlgorithm();
+    std::tuple<bool, int64_t>  solveDSATUR();
+    std::tuple<bool, int64_t> solveGreedy();
+    std::tuple<bool, int64_t> solveWelshPowell();
 
     /*algos which use multithreading*/
-    bool solveParallelWelshPowell_First();
-    bool solveParallelWelshPowell_Sec();
+    std::tuple<bool, int64_t> solveParallelWelshPowell_First();
+    std::tuple<bool, int64_t> solveParallelWelshPowell_Sec();
 
     [[nodiscard]] bool isColoringValid() const;
     [[nodiscard]] bool isGraphValid() const;
@@ -36,13 +36,14 @@ public:
     void setNumColors(int colors);
     [[nodiscard]] int getColorCount() const;
     void saveColoredGraphToDot(const std::string& filename) const;
-    void saveGeneratedGrapthToDot(const std::string& filename) const;
+    void saveGeneratedGraphToDot(const std::string& filename) const;
 
     struct AlgorithmResult {
         std::string name;
         double timeMs;
         bool success;
         int colorsUsed;
+        int64_t steps;
     };
 };
 
