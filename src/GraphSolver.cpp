@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <set>
+#include <algorithm>
 #include <omp.h>
 
 GraphSolver::GraphSolver() : numVertices(0), numColors(0) {}
@@ -22,7 +23,7 @@ bool GraphSolver::isColoringValid() const {
     return true;
 }
 
-bool GraphSolver::isGrapthValid() const {
+bool GraphSolver::isGraphValid() const {
     for (int i = 0; i < numVertices; ++i) {
         if (adjacencyMatrix[i][i] != 0) {
             return false; //петля
@@ -40,109 +41,17 @@ bool GraphSolver::isGrapthValid() const {
     return true;
 }
 
-
-// TEST PARALLEL FUNC
-void GraphSolver::parallelGreedy(const int start, const int end, std::mutex &mtx) {
-    for (int u = start; u < end; ++u) {
-        std::vector<bool> available(numColors, true);
-
-        //захват мутеха для проверки доступных цветов
-        {
-            std::lock_guard<std::mutex> lock(mtx);
-            for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
-                if (adjacencyMatrix[u][neighbor] && vertexColors[neighbor] != -1) {
-                    available[vertexColors[neighbor]] = false;
-                }
-            }
-        }
-
-        int color = -1;
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                color = c;
-                break;
-            }
-        }
-        if (color == -1) {
-            std::lock_guard<std::mutex> lock(mtx);
-            throw std::runtime_error("failed to color vertex " + std::to_string(u));
-        }
-        // захват мутеха для назначения цвета
-        {
-            std::lock_guard<std::mutex> lock(mtx);
-            vertexColors[u] = color;
-        }
-    }
-}
-
-/*bool GraphSolver::SolveParallelGreedy() {
-    vertexColors.assign(numVertices, -1);
-
-    const int numThreads = std::thread::hardware_concurrency();
-    std::vector<std::thread> threads;
-    std::mutex mtx;  //это мьютекс для синканья
-
-    int chunkSize = numVertices / numThreads; /*размер блока для каждого потока#1#
-
-    for (int i = 0; i < numThreads; ++i) {
-        int start = i * chunkSize;
-        int end = (i == numThreads - 1 ) ? numVertices : start + chunkSize;
-        threads.emplace_back(&GraphSolver::parallelGreedy, this, start, end, std::ref(mtx));
-    }
-
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    return true;
-}*/
-bool GraphSolver::SolveParallelGreedy() {
-    vertexColors.assign(numVertices, -1); // Инициализация цветов
-
-    // Параллельный цикл с использованием OpenMP
-#pragma omp parallel for
-    for (int u = 0; u < numVertices; ++u) {
-        std::vector<bool> available(numColors, true);
-
-        // Проверяем доступные цвета для вершины u
-        for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
-            if (adjacencyMatrix[u][neighbor] && vertexColors[neighbor] != -1) {
-                available[vertexColors[neighbor]] = false;
-            }
-        }
-
-        // Назначаем первый доступный цвет
-        for (int c = 0; c < numColors; ++c) {
-            if (available[c]) {
-                vertexColors[u] = c;
-                break;
-            }
-        }
-
-        if (vertexColors[u] == -1) {
-            // Если цвет не найден, выбрасываем исключение
-#pragma omp critical
-            {
-                throw std::runtime_error("Failed to color vertex " + std::to_string(u));
-            }
-        }
-    }
-
-    return true;
-}
-
-
 bool GraphSolver::solveParallelWelshPowell_First() {
     vertexColors.assign(numVertices, -1); // Инициализация цветов
 
-    // Шаг 1: Вычисление степеней вершин (параллельно)
+    // Вычисление степеней вершин (параллельно)
     std::vector<int> degrees(numVertices, 0);
     #pragma omp parallel for
     for (int i = 0; i < numVertices; ++i) {
         degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
     }
 
-    // Шаг 2: Сортировка вершин по убыванию степени
+    // Сортировка вершин по убыванию степени
     std::vector<std::pair<int, int>> vertexList;
     vertexList.reserve(numVertices);
     for (int i = 0; i < numVertices; ++i) {
@@ -152,7 +61,7 @@ bool GraphSolver::solveParallelWelshPowell_First() {
         return a.first > b.first;
     });
 
-    // Шаг 3: Раскраска вершин
+    //  Раскраска вершин
     std::vector<int> saturation(numVertices, 0); // Степень насыщенности
 
     for (int step = 0; step < numVertices; ++step) {
@@ -214,14 +123,14 @@ bool GraphSolver::solveParallelWelshPowell_First() {
 bool GraphSolver::solveParallelWelshPowell_Sec() {
     vertexColors.assign(numVertices, -1); // Инициализация цветов
 
-    // Шаг 1: Вычисление степеней вершин (параллельно)
+    // Вычисление степеней вершин (параллельно)
     std::vector<int> degrees(numVertices, 0);
     #pragma omp parallel for
     for (int i = 0; i < numVertices; ++i) {
         degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
     }
 
-    // Шаг 2: Сортировка вершин по убыванию степени
+    // Сортировка вершин по убыванию степени
     std::vector<std::pair<int, int>> vertexList;
     vertexList.reserve(numVertices);
     for (int i = 0; i < numVertices; ++i) {
@@ -231,7 +140,7 @@ bool GraphSolver::solveParallelWelshPowell_Sec() {
         return a.first > b.first;
     });
 
-    // Шаг 3: Раскраска вершин
+    // Раскраска вершин
     std::vector<int> saturation(numVertices, 0); // Степень насыщенности
 
     for (int step = 0; step < numVertices; ++step) {
@@ -300,30 +209,6 @@ std::vector<bool> GraphSolver::getAvailableColors(int vertex) const {
     return available;
 }
 
-void GraphSolver::loadFromFile(const std::string &filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open input file: " + filename);
-    }
-
-    file >> numVertices >> numColors;
-    if (numVertices <= 0 || numColors <= 0) {
-        throw std::invalid_argument("invalid graph parameters in file");
-    }
-
-    adjacencyMatrix.assign(numVertices, std::vector<int>(numVertices, 0));
-    vertexColors.assign(numVertices, -1);
-
-    for (int i = 0; i < numVertices; i++) {
-        for (int j = 0; j < numVertices; j++) {
-            if (!(file >> adjacencyMatrix[i][j] || adjacencyMatrix[i][j] < 0 || adjacencyMatrix[i][j] > 1)) {
-                throw std::invalid_argument("invalid adjacency matrix format");
-            }
-        }
-    }
-
-    file.close();
-}
 
 void GraphSolver::generateRandomGraph(int vertices, int density) {
     std::cout << "generating random graph with " << vertices << " vertices and " << density << " density" << std::endl;
@@ -532,5 +417,30 @@ void GraphSolver::saveGeneratedGrapthToDot(const std::string &filename) const {
     }
 
     file << "}\n";
+    file.close();
+}
+
+void GraphSolver::loadFromFile(const std::string &filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("failed to open input file: " + filename);
+    }
+
+    file >> numVertices >> numColors;
+    if (numVertices <= 0 || numColors <= 0) {
+        throw std::invalid_argument("invalid graph parameters in file");
+    }
+
+    adjacencyMatrix.assign(numVertices, std::vector<int>(numVertices, 0));
+    vertexColors.assign(numVertices, -1);
+
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            if (!(file >> adjacencyMatrix[i][j] || adjacencyMatrix[i][j] < 0 || adjacencyMatrix[i][j] > 1)) {
+                throw std::invalid_argument("invalid adjacency matrix format");
+            }
+        }
+    }
+
     file.close();
 }

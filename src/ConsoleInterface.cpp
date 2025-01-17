@@ -19,8 +19,6 @@ void ConsoleInterface::runAlgorithms() {
     std::ofstream outFile("results.txt");
     if (!outFile.is_open()) throw std::runtime_error("file open err \n");
 
-
-
     PerformanceTimer timer;
     bool success = false;
 
@@ -37,7 +35,30 @@ void ConsoleInterface::runAlgorithms() {
     if (success) {
         std::cout << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
         outFile << "Greedy Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
 
+    // DSATUR Algorithm
+    std::cout << "Running DSATUR Algorithm..." << std::endl;
+    outFile << "Running DSATUR Algorithm..." << std::endl;
+    timer.start();
+    success = solver.solveDSATUR();
+    timer.stop();
+    results.push_back({"DSATUR Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+    }
+
+    // Custom Algorithm
+    std::cout << "Running Custom Algorithm..." << std::endl;
+    outFile << "Running Custom Algorithm..." << std::endl;
+    timer.start();
+    success = solver.solveCustomAlgorithm();
+    timer.stop();
+    results.push_back({"Custom Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
+    if (success) {
+        std::cout << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
+        outFile << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
     }
 
     // Welsh-Powell Algorithm
@@ -52,39 +73,6 @@ void ConsoleInterface::runAlgorithms() {
         outFile << "Welsh-Powell Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
     }
 
-    /*
-    // DSATUR Algorithm
-    std::cout << "Running DSATUR Algorithm..." << std::endl;
-    timer.start();
-    success = solver.solveDSATUR();
-    timer.stop();
-    results.push_back({"DSATUR Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        std::cout << "DSATUR Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    }
-
-
-    // Custom Algorithm
-    std::cout << "Running Custom Algorithm..." << std::endl;
-    timer.start();
-    success = solver.solveCustomAlgorithm();
-    timer.stop();
-    results.push_back({"Custom Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        std::cout << "Custom Algorithm: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    }
-    */
-
-    /*// Parallel Greedy
-    std::cout << "Running Parallel Greedy Algorithm..." << std::endl;
-    timer.start();
-    success = solver.SolveParallelGreedy();
-    timer.stop();
-    results.push_back({"Parallel Greedy Algorithm", timer.getElapsedMilliseconds(), success, solver.getColorCount()});
-    if (success) {
-        std::cout << "Parallel Greedy: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
-    }*/
-
     // First Parallel Welsh-Powell
     std::cout << "Running Parallel Welsh-Powell First Algorithm..." << std::endl;
     outFile << "Running Parallel Welsh-Powell First Algorithm..." << std::endl;
@@ -96,7 +84,6 @@ void ConsoleInterface::runAlgorithms() {
         std::cout << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
         outFile << "Parallel Welsh-Powell First: Coloring is " << (solver.isColoringValid() ? "valid" : "invalid") << "\n";
     }
-
 
     // Sec Parallel Welsh-Powell
     std::cout << "Running Parallel Welsh-Powell Sec Algorithm..." << std::endl;
@@ -146,16 +133,16 @@ void ConsoleInterface::run() {
             solver.generateRandomGraph(vertices, density);
             solver.setNumColors(numColors);
             /*solver.saveGeneratedGrapthToDot("graph.dot");*/
-            if (!solver.isGrapthValid()) {
+            if (!solver.isGraphValid()) {
                 std::cerr << "err: generated graph is invalid" << std::endl;
                 continue;
             }
             std::cout << "Generated graph saved to generated_graph.dot.\n";
 
-
             runAlgorithms();
             break;
-        } else if (choice == 2) {
+        }
+        if (choice == 2) {
             try {
                 solver.loadFromFile("input.txt");
                 std::cout << "Graph loaded successfully from input.txt.\n";

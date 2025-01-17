@@ -8,7 +8,6 @@
  * testing with threads
  */
 #include <thread>
-#include <vector>
 #include <mutex>
 
 
@@ -20,26 +19,26 @@ private:
     std::vector<int> vertexColors;
 
 
-    std::vector<bool> getAvailableColors(int vertex) const;
+    [[nodiscard]] std::vector<bool> getAvailableColors(int vertex) const;
 
 public:
     GraphSolver();
 
-    void parallelGreedy(int start, int end, std::mutex &mtx);
-    bool SolveParallelGreedy();
-
-    bool solveParallelWelshPowell_First();
-    bool solveParallelWelshPowell_Sec();
-
     void loadFromFile(const std::string& filename);
     void generateRandomGraph(int vertices, int density);
+
+    /*algos with deafault reaslisation without using multithreading*/
     bool solveCustomAlgorithm();
     bool solveDSATUR();
     bool solveGreedy();
     bool solveWelshPowell();
 
+    /*algos which use multithreading*/
+    bool solveParallelWelshPowell_First();
+    bool solveParallelWelshPowell_Sec();
+
     [[nodiscard]] bool isColoringValid() const;
-    bool isGrapthValid() const;
+    [[nodiscard]] bool isGraphValid() const;
 
     void setNumColors(int colors);
     [[nodiscard]] int getColorCount() const;
