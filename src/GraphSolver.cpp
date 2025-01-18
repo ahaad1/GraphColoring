@@ -50,6 +50,16 @@ std::vector<bool> GraphSolver::getAvailableColors(const int vertex) const {
     }
     return available;
 }
+std::vector<bool> GraphSolver::getAvailableColors(const int vertex, int64_t* stepCnt) const {
+    std::vector<bool> available(numColors, true);
+    for (int neighbor = 0; neighbor < numVertices; ++neighbor) {
+        (*stepCnt)++;
+        if (adjacencyMatrix[vertex][neighbor] && vertexColors[neighbor] != -1) {
+            available[vertexColors[neighbor]] = false;
+        }
+    }
+    return available;
+}
 
 void GraphSolver::setNumColors(const int colors) {
     if (colors <= 0) {
@@ -177,7 +187,7 @@ void GraphSolver::generateRandomGraph(const int vertices, const int density) {
 
 
 
-std::tuple<bool, int64_t> GraphSolver::solveCustomAlgorithm() {
+/*std::tuple<bool, int64_t> GraphSolver::solveCustomAlgorithm() {
     vertexColors.assign(numVertices, -1);
     int64_t stepCount = 0;
     for (int u = 0; u < numVertices; ++u) {
@@ -195,9 +205,8 @@ std::tuple<bool, int64_t> GraphSolver::solveCustomAlgorithm() {
         if (vertexColors[u] == -1) return {false, stepCount};
     }
     return {true, stepCount};
-}
-
-std::tuple<bool, int64_t> GraphSolver::solveDSATUR() {
+}*/
+/*std::tuple<bool, int64_t> GraphSolver::solveDSATUR() {
     vertexColors.assign(numVertices, -1);
     int64_t stepCount = 0;
     std::vector<int> saturation(numVertices, 0);
@@ -244,9 +253,8 @@ std::tuple<bool, int64_t> GraphSolver::solveDSATUR() {
         }
     }
     return {true, stepCount};
-}
-
-std::tuple<bool, int64_t> GraphSolver::solveGreedy() {
+}*/
+/*std::tuple<bool, int64_t> GraphSolver::solveGreedy() {
     vertexColors.assign(numVertices, -1);
     int64_t stepCount = 0;
     for (int u = 0; u < numVertices; ++u) {
@@ -267,9 +275,8 @@ std::tuple<bool, int64_t> GraphSolver::solveGreedy() {
         vertexColors[u] = color;
     }
     return {true, stepCount};
-}
-
-std::tuple<bool, int64_t> GraphSolver::solveWelshPowell() {
+}*/
+/*std::tuple<bool, int64_t> GraphSolver::solveWelshPowell() {
     vertexColors.assign(numVertices, -1);
     int64_t stepCount = 0;
 
@@ -304,9 +311,165 @@ std::tuple<bool, int64_t> GraphSolver::solveWelshPowell() {
         }
     }
     return {true, stepCount};
+}*/
+
+std::tuple<bool, int64_t> GraphSolver::solveGreedy() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    // Шаг: инициализация
+    stepCount++;
+
+    for (int u = 0; u < numVertices; ++u) {
+        // Шаг: проверка доступных цветов
+        std::vector<bool> available = getAvailableColors(u, &stepCount);
+        stepCount++;
+
+        int color = -1;
+        for (int c = 0; c < numColors; ++c) {
+            // Шаг: проверка доступности цвета
+            if (available[c]) {
+                color = c;
+                stepCount++; // Шаг: выбор цвета
+                break;
+            }
+            stepCount++; // Шаг: проверка следующего цвета
+        }
+
+        if (color == -1) return {false, stepCount};
+
+        // Шаг: назначение цвета вершине
+        vertexColors[u] = color;
+        stepCount++;
+    }
+
+    return {true, stepCount};
 }
+std::tuple<bool, int64_t> GraphSolver::solveDSATUR() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+    std::vector<int> saturation(numVertices, 0);
+    std::vector<int> degree(numVertices, 0);
 
+    // Шаг: вычисление степеней вершин
+    for (int i = 0; i < numVertices; ++i) {
+        for (int j = 0; j < numVertices; ++j) {
+            if (adjacencyMatrix[i][j]) {
+                ++degree[i];
+                stepCount++; // Шаг: подсчет степени
+            }
+        }
+    }
 
+    for (int step = 0; step < numVertices; ++step) {
+        int maxSaturationVertex = -1;
+        int maxSaturation = -1;
+
+        // Шаг: поиск вершины с максимальной насыщенностью
+        for (int v = 0; v < numVertices; ++v) {
+            if (vertexColors[v] == -1 && (saturation[v] > maxSaturation || (saturation[v] == maxSaturation && degree[v] > degree[maxSaturationVertex]))) {
+                maxSaturation = saturation[v];
+                maxSaturationVertex = v;
+                stepCount++; // Шаг: поиск вершины
+            }
+        }
+
+        if (maxSaturationVertex == -1) return {false, stepCount};
+
+        // Шаг: выбор цвета для вершины
+        std::vector<bool> available = getAvailableColors(maxSaturationVertex, &stepCount);
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[maxSaturationVertex] = c;
+                stepCount++; // Шаг: выбор цвета
+                break;
+            }
+            stepCount++; // Шаг: проверка следующего цвета
+        }
+
+        if (vertexColors[maxSaturationVertex] == -1) return {false, stepCount};
+
+        // Шаг: обновление насыщенности соседей
+        for (int u = 0; u < numVertices; ++u) {
+            if (adjacencyMatrix[maxSaturationVertex][u] && vertexColors[u] == -1) {
+                ++saturation[u];
+                stepCount++; // Шаг: обновление насыщенности
+            }
+        }
+    }
+
+    return {true, stepCount};
+}
+std::tuple<bool, int64_t> GraphSolver::solveWelshPowell() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    // Шаг: вычисление степеней вершин
+    std::vector<int> degrees(numVertices, 0);
+    for (int i = 0; i < numVertices; ++i) {
+        degrees[i] = std::accumulate(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end(), 0);
+        stepCount++; // Шаг: подсчет степени
+    }
+
+    // Шаг: сортировка вершин по убыванию степени
+    std::vector<std::pair<int, int>> vertexList;
+    vertexList.reserve(numVertices);
+    for (int i = 0; i < numVertices; ++i) {
+        vertexList.emplace_back(degrees[i], i);
+        stepCount++; // Шаг: добавление вершины в список
+    }
+    std::ranges::sort(vertexList, [](const auto& a, const auto& b) {
+        return a.first > b.first;
+    });
+    stepCount += numVertices * std::log2(numVertices); // Шаг: сортировка
+
+    // Шаг: раскраска вершин
+    for (const auto& [degree, vertex] : vertexList) {
+        std::vector<bool> available = getAvailableColors(vertex, &stepCount);
+        stepCount++; // Шаг: проверка доступных цветов
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[vertex] = c;
+                stepCount++; // Шаг: выбор цвета
+                break;
+            }
+            stepCount++; // Шаг: проверка следующего цвета
+        }
+
+        if (vertexColors[vertex] == -1) {
+            return {false, stepCount};
+        }
+    }
+
+    return {true, stepCount};
+}
+std::tuple<bool, int64_t> GraphSolver::solveCustomAlgorithm() {
+    vertexColors.assign(numVertices, -1);
+    int64_t stepCount = 0;
+
+    // Шаг: инициализация
+    stepCount++;
+
+    for (int u = 0; u < numVertices; ++u) {
+        // Шаг: проверка доступных цветов
+        std::vector<bool> available = getAvailableColors(u, &stepCount);
+        stepCount++;
+
+        for (int c = 0; c < numColors; ++c) {
+            if (available[c]) {
+                vertexColors[u] = c;
+                stepCount++; // Шаг: выбор цвета
+                break;
+            }
+            stepCount++; // Шаг: проверка следующего цвета
+        }
+
+        if (vertexColors[u] == -1) return {false, stepCount};
+    }
+
+    return {true, stepCount};
+}
 
 
 std::tuple<bool, int64_t> GraphSolver::solveParallelWelshPowell() {

@@ -1,10 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Загрузка данных из CSV
 df = pd.read_csv('../build/benchmark_results.csv')
 
-# 1. График времени выполнения алгоритмов в зависимости от количества вершин
+# График времени выполнения алгоритмов в зависимости от количества вершин
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -17,7 +16,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 2. График количества шагов алгоритмов в зависимости от количества вершин
+# График количества шагов алгоритмов в зависимости от количества вершин
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -30,7 +29,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 3. График количества использованных цветов в зависимости от количества вершин
+#  График количества использованных цветов в зависимости от количества вершин
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -43,7 +42,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 4. График времени выполнения в зависимости от плотности графа
+# График времени выполнения в зависимости от плотности графа
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -56,7 +55,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 5. График количества шагов в зависимости от плотности графа
+# График количества шагов в зависимости от плотности графа
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -82,7 +81,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 7. Корреляция между временем выполнения и количеством шагов
+# Корреляция между временем выполнения и количеством шагов
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]
@@ -95,7 +94,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# 8. Корреляция между временем выполнения и количеством использованных цветов
+# Корреляция между временем выполнения и количеством использованных цветов
 plt.figure(figsize=(10, 6))
 for algorithm in df['Algorithm'].unique():
     subset = df[df['Algorithm'] == algorithm]

@@ -14,6 +14,7 @@ private:
 
 
     [[nodiscard]] std::vector<bool> getAvailableColors(int vertex) const;
+    [[nodiscard]] std::vector<bool> getAvailableColors(int vertex, int64_t* stepCnt) const;
 
 public:
     GraphSolver();

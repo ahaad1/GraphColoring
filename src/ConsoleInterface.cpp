@@ -149,20 +149,20 @@ void ConsoleInterface::runAlgorithms() {
 }
 
 void ConsoleInterface::runBenchmarks() {
-    std::ofstream outFile("benchmark_results.csv");
+    std::ofstream outFile("benchmark_results_small.csv");
     if (!outFile.is_open()) throw std::runtime_error("file open err \n");
 
     outFile << "Vertices,Density,Colors,Algorithm,TimeMs,Steps,ColorsUsed,Success,ColoringValid\n";
 
     // Начальное количество вершин
     int vertices = 100;
-    constexpr int maxVertices = 10000; // Максимальное количество вершин
+    constexpr int maxVertices = 5000; // Максимальное количество вершин
 
     std::vector<std::tuple<int, int, int, std::string, double, int64_t, int, bool, bool>> benchmarkResults;
 
     while (vertices <= maxVertices) {
         const int densityMax = 90;
-        const int densityMin = 60;
+        const int densityMin = 90;
         const int densityStep = 10;
         for (int density = densityMin; density <= densityMax; density += densityStep) {
             int colors = static_cast<int>(vertices * 0.9); // Количество цветов = количество вершин - 10%
@@ -235,7 +235,7 @@ void ConsoleInterface::runBenchmarks() {
     outFile.close();
 
     setConsoleColor(COLOR_YELLOW);
-    std::cout << "\nBenchmark results saved to benchmark_results.csv\n";
+    std::cout << "\nBenchmark results saved to benchmark_results_small.csv\n";
     resetConsoleColor();
 }
 
